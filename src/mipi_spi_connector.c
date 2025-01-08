@@ -34,6 +34,12 @@
     .miso = MIPI_SPI_DEFAULT_MISO_PIN, \
   }
 
+/**
+ * At the moment, starting and ending a transaction simply requires driving the
+ * chip-select pin hi-lo, but, in the future, it may be necessary to obtain a 
+ * lock on the peripheral if multiple displays are to be connected to a single
+ * bus.
+ */
 #define SPI_BEGIN_TRANSACTION(spi_conn) \
   gpio_put( \
     spi_conn->cs, \
@@ -122,6 +128,7 @@ void
 mipi_spi_flush_fmbf( 
   struct mipi_panel_io_connector * self,
   _IN_ uint8_t * pix_buff,
+  const struct mipi_area bounds,
   size_t len )
 {
   struct mipi_panel_spi_connector * spi_conn;

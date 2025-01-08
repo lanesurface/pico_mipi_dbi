@@ -43,12 +43,10 @@ pico_set_program_version(TestTFT "0.1")
 pico_enable_stdio_uart(TestTFT 0)
 pico_enable_stdio_usb(TestTFT 1)
 
-# Add the standard library to the build
 target_link_libraries(${PROJECT_NAME} PUBLIC
-  pico_stdlib
-  hardware_spi
-  hardware_dma
-  mipi_dbi)
+  pico_mipi_dbi 
+  /* ... */ 
+  )
 
 # Add the standard include files to the build
 target_include_directories(TestTFT PRIVATE

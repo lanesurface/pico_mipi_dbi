@@ -4,21 +4,21 @@
  *         mipi.h
  * ========================
  * 
- * A MIPI-compatible display is one which implements one of the three [1],[2], 
- * and [3] specifications for display interfacing developed by the MIPI 
+ * A MIPI-compatible display is one which implements one of the three [1], [2], 
+ * and/or [3] specifications for display interfacing developed by the MIPI 
  * Alliance. Of these, many options are available, which have different 
  * communication requirements.
  * 
  * This library concerns itself with the MIPI type C, DBI interface, which
  * is often used on small-resolution matrix displays capable of being driven
  * by a microcontroller. A DBI display itself may have many options for its IO
- * link, such as over SPI, I2C, or an 8080 parallel bus. Therefore, a need for
- * a flexible interface with the communication peripheral is also provided.
+ * link, such as over SPI, I2C, or an 8080 parallel bus, and so a flexible 
+ * mechanism for communication with the panel is also required.
  * 
  * Many of the most common display controllers ("drivers") have implementations
  * here, which may serve as a starting point; however, certain parameters are
- * manufacturer-specific, and need to be provided after initialization of the 
- * device, and before data transmission begins.
+ * manufacturer-specific, and thus need to be provided after initialization of 
+ * the  device, and before data transmission begins.
  * 
  * Author(s): Lane W Surface
  * Created:   2025-01-06
@@ -26,6 +26,7 @@
  * 
  * Copyright Surface EP, LLC 2025.
  */
+
 #ifndef __MIPI_H__
 #define __MIPI_H__
 
@@ -56,7 +57,7 @@ extern "C" {
     printf("[%s]: %s \n", tag, log_buff); \
   }
 #else 
-#define __mipi_dbg(fmt, ...) 
+#define __mipi_dbg(tag, fmt, ...) 
 #endif
 
 #define IO_CTR( x ) (struct mipi_panel_io_connector *)(x)
@@ -111,10 +112,21 @@ struct mipi_color {
   u8 r, g, b;
 };
 
+struct mipi_area {
+  uint x, y, w, h;
+};
+
 enum color_format {
   RGB_111, // Monochrome
-  RGB_565,
-  RGB_666,
+  RGB_565, // 16-bit color
+  /**
+   * It would be pretty useless to implement support for 18-bit color, as these 
+   * displays expect that each of the 6-bit color components are aligned on the
+   * MSB of a single byte, and the lower two bits are "don't care" values. In 
+   * this case, 24-bit color can be sent as is, as clamping would have resulted
+   * in identical output on the panel.
+   */
+  /* RGB_666, */
   RGB_888,
   YCbCr_422,
 };
@@ -126,11 +138,11 @@ static const enum color_format MIPI_SRC_FMT=RGB_888;
  *    MIPI Panel Format
  * ========================
  * 
- * The destination pixel format, which dictates the order and number of bytes
- * per pixel the panel expects to receive during a transmission of the frame 
- * buffer over the IO connector. Any number of these formats may be supported;
- * however, only one format is active at a time, and the panel must receive a
- * `COLMOD` command before changing to another.
+ * The destination pixel format, which dictates the order and stride of each
+ * line in the buffer that the panel expects to receive during frame 
+ * transmission over the IO connector. Any number of these formats may be 
+ * supported; however, only one format is active at a time, and the panel must 
+ * receive the `COLMOD` command before changing to any other.
  * 
  * The destination format shall determine how the color data is to be 
  * interpreted; that is to say, the method by which an (R,G,B) color tuple,
@@ -195,15 +207,14 @@ struct mipi_panel_io_connector {
   );
 
   /**
-   * Transmits pixel data to the display panel. The `pix_data` buffer should
-   * contain the pixel data in the format specified by the display panel. The
-   * `len` parameter should be the size of the buffer in bytes. Data may be
-   * transferred either in totality, or, at the discretion of the client, in
-   * smaller chunks. 
+   * Transmits pixel data from the buffer `fmbf` to an absolute position on the
+   * panel, specified by `bounds`, clipping this buffer to those bounds and the 
+   * bounds of the screen, if necessary.
    */
   void (*flush_fmbf)(
     struct mipi_panel_io_connector * self, 
     _IN_ u8 * fmbf, 
+    const struct mipi_area bounds,
     size_t len 
   );
 };
@@ -229,6 +240,11 @@ struct mipi_dbi_panel_device {
   struct mipi_dbi_panel_format out_fmt, * fmt_list;
   struct mipi_panel_io_connector * io;
   // struct mipi_fmbf * fmbf;
+  /**
+   * Set when the panel is in an invalid state due to incompatibility with a 
+   * request made or system error. 
+   */
+  int errno;
   /**
    * The initialization sequence for the display. Must be provided by the
    * display manufacturer, or otherwise obtained if no existing sequence

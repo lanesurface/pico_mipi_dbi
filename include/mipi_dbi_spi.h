@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 struct mipi_panel_spi_connector {
-  struct mipi_panel_io_connector io; /* BASE */
+  struct mipi_panel_io_connector * io; /* BASE */
   spi_inst_t * spi;
   uint8_t * tx_buf, * rx_buf;
   size_t tx_len, rx_len;
@@ -73,6 +73,7 @@ extern void
 mipi_spi_flush_fmbf( 
   struct mipi_panel_io_connector * self,
   _IN_ uint8_t * buf,
+  const struct mipi_area bounds,
   size_t len 
 );
 
