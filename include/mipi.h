@@ -45,6 +45,12 @@ extern "C" {
 
 #ifdef __MIPI_DBG_ENABLE__
 #define LOG_BUFF_SZ 128
+/**
+ * A note on debugging: by default, this macro will output all logs related 
+ * to the MIPI DBI driver to stdout, which means that, in an application  
+ * which needs to analyze the output, a necessary call to the appropriate
+ * `pico_enable_stdio_*` must be performed in the Makefile.
+ */
 #define __mipi_dbg(tag, fmt, ...) \
   { \
     char log_buff[LOG_BUFF_SZ]; \
@@ -52,7 +58,7 @@ extern "C" {
       log_buff, \
       LOG_BUFF_SZ, \
       fmt, \
-      ##__VA_ARGS__
+      ##__VA_ARGS__ \
     ); \
     printf("[%s]: %s \n", tag, log_buff); \
   }
@@ -61,6 +67,7 @@ extern "C" {
 #endif
 
 #define IO_CTR( x ) (struct mipi_panel_io_connector *)(x)
+#define IO_CTR_PTR( x ) (IO_CTR(&x))
 #define MIPI_CLR( r, g, b ) \
   (struct mipi_color){ \
     r, \

@@ -238,19 +238,19 @@ main()
   }
   gpio_put(PIN_CS, 1);
 
-  struct mipi_spi_connector * conn;
+  struct mipi_panel_spi_connector ctr;
   struct mipi_dbi_panel_device * dev;
 
-  conn=mipi_dbi_spi_connector(
-    SPI_PORT,
+  ctr=MIPI_SPI_DBI_CTR( 
+    SPI_PORT,  
     PIN_SCK,
     PIN_MOSI,
     PIN_MISO,
     PIN_CS,
-    PIN_DCX
+    PIN_DCX  
   );
-  mipi_spi_connector_init( conn );
-  if (conn->errno) {
+  mipi_spi_connector_init( ctr );
+  if (ctr.errno) {
     goto release_conn;
   }
 
@@ -260,7 +260,7 @@ main()
     16,
     1
   );
-  mipi_panel_dev_init( dev, IO_CTR(conn) );
+  mipi_panel_dev_init( dev, IO_CTR_PTR( ctr ) );
 
 release_dev:
   if (dev) {
@@ -269,8 +269,8 @@ release_dev:
     __mipi_dbg( MIPI_DBG_TAG, "no device to release\n" );
   }
 release_conn:
-  if (conn) {
-    mipi_spi_connector_free( conn );
+  if (ctr) {
+    mipi_spi_connector_free( ctr );
   } else {
     __mipi_dbg( MIPI_DBG_TAG, "connector not initialized\n" );
   }
