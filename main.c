@@ -238,10 +238,10 @@ main()
   }
   gpio_put(PIN_CS, 1);
 
-  struct mipi_panel_spi_connector ctr;
-  struct mipi_dbi_panel_device * dev;
+  struct mipi_spi_ctr ctr;
+  struct mipi_dbi_dev * dev;
 
-  ctr=MIPI_SPI_DBI_CTR( 
+  ctr=MIPI_SPI_DBI_CTR ( 
     SPI_PORT,  
     PIN_SCK,
     PIN_MOSI,
@@ -249,31 +249,27 @@ main()
     PIN_CS,
     PIN_DCX  
   );
-  mipi_spi_connector_init( ctr );
+  mipi_spi_connector_init (ctr);
   if (ctr.errno) {
     goto release_conn;
   }
 
-  dev=mipi_dbi_panel_device(
+  dev=mipi_dbi_panel_device (  // mipi_dbi_dev (  );
     "ILI9163C",
     128, 160,
     16,
     1
   );
-  mipi_panel_dev_init( dev, IO_CTR_PTR( ctr ) );
+  mipi_panel_dev_init (dev, IO_CTR_PTR (ctr));
 
 release_dev:
   if (dev) {
-    mipi_panel_dev_free( dev );
+    mipi_panel_dev_free (dev);
   } else {
-    __mipi_dbg( MIPI_DBG_TAG, "no device to release\n" );
+    __mipi_dbg (MIPI_DBG_TAG, "no device to release\n");
   }
 release_conn:
-  if (ctr) {
-    mipi_spi_connector_free( ctr );
-  } else {
-    __mipi_dbg( MIPI_DBG_TAG, "connector not initialized\n" );
-  }
+  mipi_spi_connector_free (ctr); // mipi_spi_connector_deinit (ctr);
   // gpio_put(PIN_DCX, 0);
   // gpio_put(PIN_CS, 0);
   // spi_write_blocking(SPI_PORT, &write_cmd, 1);

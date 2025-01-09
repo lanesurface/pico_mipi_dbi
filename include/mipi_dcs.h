@@ -12,6 +12,16 @@
 extern "C" {
 #endif
 
+/**
+ * ========================
+ *  MIPI DCS Instructions
+ * ========================
+ * 
+ * Refer to the MIPI Display Command Set [1] specifications for additional
+ * information about the function of these commands and their parameters. 
+ * Additionally, some parameters are hardware-specific, and thus must be
+ * obtained from the display manufacturer or otherwise.
+ */
 #define NOP 0x00
 #define SWRST 0x01
 #define RDDID 0x04
@@ -31,7 +41,7 @@ extern "C" {
 #define GAMSET 0x26
 #define DISPOFF 0x28
 #define DISPON 0x29
-// # <<GFX Memory Buffer Write>>
+// <<GFX Memory Buffer Write>>
 // RAMWR data[xi][yi], 
 //   data[xi+1][yi],
 //   ..., 
@@ -43,12 +53,14 @@ extern "C" {
 #define VSCRDEF 0x33
 #define TEOFF 0x34
 #define TEON 0x35
-// # <<Memory Access Ctl>>
+// <<Memory Access Ctl>>
 // MADCTL <MX,MY, // mirror x, mirror y
 //   MV,ML, // xchange rows/columns, scan direction
 //   RGB, // 0=RGB, 1=BGR
 //   0,0>; 
 #define MADCTL 0x36
+#define CASET 0x2A
+#define RASET 0x2B
 #define VSCRSADD 0x37
 #define IDMOFF 0x38
 #define IDMON 0x39
@@ -78,16 +90,39 @@ extern "C" {
 #define NVFCTRL2 0xDE
 #define NVFCTRL3 0xDF
 
+#define MIPI_DELAY (u8) 1<<7
+#define END_DCS_SEQ NOP
+
+/**
+ * ========================
+ *  Interface Pixel Format 
+ * ========================
+ */
+#define IFPF_16_BIT 0x05 /* RGB_565 */
+#define IFPF_18_BIT 0x06 /* RGB_888 */
+#define IFPF_24_BIT      /* RGB_888 */
+
+/**
+ * ========================
+ *   Memory Address Ctrl
+ * ========================
+ */
+#define MX      1<<7
+#define MY      1<<6
+#define SWAP_XY 1<<5
+#define BGR     1<<5
+#define RGB     0<<5
+
 struct mipi_dcs_cmd 
 {
-  uint code;
-  size_t len;
+  uint code_pt;
+  size_t nargs;
   u8 * params;
 };
 
 
 #define __DEFINE_MIPI_DCS_CMD(name, code, n_params) \
-  
+  ;
 
 /**
  * const struct mipi_dcs_cmd cmd=mipi_dcs_cmd(

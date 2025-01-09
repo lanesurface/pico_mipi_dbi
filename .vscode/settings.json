@@ -42,6 +42,7 @@
         "stdio.h": "c",
         "stdint.h": "c",
         "stdlib.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "stdbool.h": "c"
     }
 }

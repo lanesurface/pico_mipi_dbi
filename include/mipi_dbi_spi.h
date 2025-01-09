@@ -25,6 +25,22 @@ extern "C" {
 
 
 /******************** 
+ *     Macros
+ *******************/
+
+#define MIPI_SPI_DBI_CTR( spi_prt, sck_pin, mosi_pin, miso_pin, cs_pin, dcx_pin ) \
+  (struct mipi_spi_ctr){ \
+    .io=MIPI_SPI_CTR_FUNCS, \
+    .spi=spi_prt, \
+    .sck=sck_pin, \
+    .mosi=mosi_pin, \
+    .miso=miso_pin, \
+    .cs=cs_pin, \
+    .dcx=dcx_pin \
+  }
+
+
+/******************** 
  * Global Constants
  *******************/
 
@@ -36,13 +52,15 @@ extern "C" {
 #define MIPI_SPI_DEFAULT_CS_PIN   17
 #define MIPI_SPI_DEFAULT_DCX_PIN  20
 
+extern const struct mipi_io_ctr MIPI_SPI_CTR_FUNCS;
+
 
 /******************** 
  *  Data Structures
  *******************/
 
-struct mipi_panel_spi_connector {
-  struct mipi_panel_io_connector io; /* BASE */
+struct mipi_spi_ctr {
+  struct mipi_io_ctr io; /* BASE */
   spi_inst_t * spi;
   uint8_t * tx_buf, * rx_buf;
   size_t tx_len, rx_len;
@@ -60,8 +78,8 @@ struct mipi_panel_spi_connector {
  * Global Functions
  *******************/
 
-extern struct mipi_panel_spi_connector *
-mipi_dbi_spi_connector(
+extern struct mipi_spi_ctr 
+mipi_spi_ctr(
   spi_inst_t * spi,
   uint sck,
   uint mosi,
@@ -71,14 +89,14 @@ mipi_dbi_spi_connector(
 );
 
 extern void
-mipi_dbi_spi_connector_init( struct mipi_panel_spi_connector * self );
+mipi_dbi_spi_connector_init( struct mipi_spi_ctr * self );
 
 extern void
-mipi_dbi_spi_connector_free( struct mipi_panel_spi_connector * self );
+mipi_dbi_spi_connector_free( struct mipi_spi_ctr * self );
 
 extern void
 mipi_spi_send_cmd( 
-  struct mipi_panel_io_connector * self,
+  struct mipi_io_ctr * self,
   uint cmd,
   _IN_ uint8_t * buf, 
   size_t len 
@@ -86,7 +104,7 @@ mipi_spi_send_cmd(
 
 extern size_t
 mipi_spi_recv_params( 
-  struct mipi_panel_io_connector * self,
+  struct mipi_io_ctr * self,
   uint cmd,
   _OUT_ uint8_t * params,
   size_t len 
@@ -94,30 +112,12 @@ mipi_spi_recv_params(
 
 extern void 
 mipi_spi_flush_fmbf( 
-  struct mipi_panel_io_connector * self,
+  struct mipi_io_ctr * self,
   _IN_ uint8_t * buf,
   const struct mipi_area bounds,
   size_t len 
 );
 
-
-static const struct mipi_panel_io_connector MIPI_SPI_CTR_FUNCS=
-  (struct mipi_panel_io_connector) {
-    .send_cmd=mipi_spi_send_cmd,
-    .recv_params=mipi_spi_recv_params,
-    .flush_fmbf=mipi_spi_flush_fmbf
-  };
-
-#define MIPI_SPI_DBI_CTR( spi_prt, sck_pin, mosi_pin, miso_pin, cs_pin, dcx_pin ) \
-  (struct mipi_panel_spi_connector){ \
-    .io=MIPI_SPI_CTR_FUNCS, \
-    .spi=spi_prt, \
-    .sck=sck_pin, \
-    .mosi=mosi_pin, \
-    .miso=miso_pin, \
-    .cs=cs_pin, \
-    .dcx=dcx_pin \
-  }
 
 #ifdef __cplusplus
 }
