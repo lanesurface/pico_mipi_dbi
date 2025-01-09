@@ -9,31 +9,6 @@
 #include "mipi_dcs.h"
 #include "mipi_dbi_spi.h"
 
-#define MIPI_SPI_DEFAULT_BAUD 32*1000*1000 /* 32 MHz */
-#define MIPI_SPI_DEFAULT_MOSI_PIN 19
-#define MIPI_SPI_DEFAULT_MISO_PIN 16
-#define MIPI_SPI_DEFAULT_SCK_PIN  18
-#define MIPI_SPI_DEFAULT_CS_PIN   17
-#define MIPI_SPI_DEFAULT_DCX_PIN  20
-
-#define MIPI_DBI_SPI_DEFAULT_CONFIG() \
-  { \
-    .io = { \
-      .name="MIPI SPI I/O", \
-      .type=MIPI_DBI_SPI, \
-    }, \
-    .spi = spi0, \
-    .tx_buf = NULL, \
-    .rx_buf = NULL, \
-    .tx_len = 0, \
-    .rx_len = 0, \
-    .cs = MIPI_SPI_DEFAULT_CS_PIN, \
-    .dcx = MIPI_SPI_DEFAULT_DCX_PIN, \
-    .sck = MIPI_SPI_DEFAULT_SCK_PIN, \
-    .mosi = MIPI_SPI_DEFAULT_MOSI_PIN, \
-    .miso = MIPI_SPI_DEFAULT_MISO_PIN, \
-  }
-
 /**
  * At the moment, starting and ending a transaction simply requires driving the
  * chip-select pin hi-lo, but, in the future, it may be necessary to obtain a 
@@ -49,6 +24,26 @@
   gpio_put( \
     spi_conn->cs, \
     1 );
+
+struct mipi_spi_panel_connector 
+mipi_dbi_spi_connector( 
+  spi_inst_t * spi,
+  uint sck,
+  uint mosi,
+  uint miso,
+  uint cs,
+  uint dcx )
+{
+  struct mipi_spi_panel_connector spi_ctr;
+  return (struct mipi_spi_panel_connector){
+    .io=MIPI_SPI_CTR_FUNCS,
+    .sck=sck,
+    .mosi=mosi,
+    .miso=miso,
+    .cs=cs,
+    .dcx=dcx
+  };
+}
 
 void
 mipi_dbi_spi_connector_init( struct mipi_panel_spi_connector * self )
