@@ -214,7 +214,7 @@ struct mipi_panel_io_connector {
   void (*flush_fmbf)(
     struct mipi_panel_io_connector * self, 
     _IN_ u8 * fmbf, 
-    const struct mipi_area bounds,
+    const struct mipi_area * bounds,
     size_t len 
   );
 };
