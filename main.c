@@ -260,11 +260,11 @@ main()
     16,
     1
   );
-  mipi_panel_dev_init (dev, IO_CTR_PTR (ctr));
+  mipi_dbi_dev_init (dev, IO_CTR_PTR (ctr));
 
 release_dev:
   if (dev) {
-    mipi_panel_dev_free (dev);
+    mipi_dbi_dev_free (dev);
   } else {
     __mipi_dbg (MIPI_DBG_TAG, "no device to release\n");
   }

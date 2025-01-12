@@ -113,22 +113,92 @@ extern "C" {
 #define BGR     1<<5
 #define RGB     0<<5
 
-struct mipi_dcs_cmd 
-{
+struct mipi_dcs_cmd {
   uint code_pt;
-  size_t nargs;
+  ssize_t nargs;
   u8 * params;
 };
 
+static size_t 
+__mipi_dcs_get_seq_len (_IN_ u8 mipi_dcs_seq[]);
 
-#define __DEFINE_MIPI_DCS_CMD(name, code, n_params) \
-  ;
+/**
+ * Writes the given initialization commands in the format specified above to a
+ * panel over the given `mipi_io_ctr`.
+ */
+static ssize_t
+__mipi_dcs_write_seq (struct mipi_io_ctr * io_ctr, u8 init_seq[])
+{
+  if (io_ctr==NULL) {
+    __mipi_dbg (
+      MIPI_DBG_TAG,
+      "IO connector uninitialized, failed to write init sequence"
+    );
+
+    return -(EINVAL);
+  }
+
+  if (init_seq==NULL) {
+    __mipi_dbg (
+      MIPI_DBG_TAG,
+      "no initialization sequence provided, aborting transaction.."
+    );
+    
+    return -(EINVAL);
+  }
+
+  while (true) {
+    size_t i=0;
+
+    if (init_seq[i]==END_DCS_SEQ) {
+      return i;
+    } else {
+      // Get number of parameters to write.
+      u8 num_params=init_seq[++i];
+      u8 * params=init_seq+i;
+
+      io_ctr->send_cmd (
+        io_ctr, 
+        init_seq[i], 
+        params,
+        num_params
+      );
+      i+=num_params;
+    }
+  }
+}
+
+#define __MIPI_DEFINE_DCS_CMD(name, code, n_params) \
+  static const struct mipi_dcs_cmd MIPI_DCS_CMD ## name= \
+  (struct mipi_dcs_cmd) { \
+    .code_pt=code, \
+    .nargs=n_params, \
+  }; \
+  \ 
+  static const size_t              \
+  name (                           \
+    _OUT_ u8 dcs_seq_buff[],       \
+    _IN_ u8 * args[],              \
+    size_t n )                     \
+  {                                \
+    return (struct mipi_dcs_cmd) { \
+      .code_pt=code,               \
+      .nargs=n_params,             \
+    };                             \
+  } 
 
 /**
  * const struct mipi_dcs_cmd cmd=mipi_dcs_cmd(
  *   RAMWR, 
  *   0, 
  *   NULL);
+ * 
+ * __DEFINE_MIPI_DCS_CMD (
+ *   RAMWR,
+ *   0x2C,
+ *   -1
+ * );
+ * RAMWR (arg_buff, sz);
  */
 
 #ifdef __cplusplus

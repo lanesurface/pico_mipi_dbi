@@ -155,13 +155,20 @@ mipi_spi_flush_fmbf (
     if (spi_conn) {
       SPI_BEGIN_TRANSACTION (spi_conn);
 
-      u8 ram_wr=RAMWR;
-      gpio_put (spi_conn->dcx, 0);
-      spi_write_blocking ( 
-        spi_conn->spi, 
-        &ram_wr, 
-        1 
-      );
+      // u8 ca_params[];
+      // spi_conn->io->write_cmd(
+      //   self,
+      //   CASET,
+      //   ca_params,
+      //   4
+      // );
+
+      // spi_conn->io->write_cmd(
+      //   self, 
+      //   RAMWR, 
+      //   NULL, 
+      //   0
+      // );
 
       gpio_put (spi_conn->dcx, 1);
       spi_write_blocking ( 

@@ -33,6 +33,8 @@ project(TestTFT C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+set (MIPI_ROOT_LIB_DIR ${CMAKE_CURRENT_LIST_DIR})
+
 add_subdirectory(src)
 add_executable(TestTFT main.c)
 

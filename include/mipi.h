@@ -53,6 +53,18 @@ extern "C" {
  * which needs to analyze the output, a necessary call to the appropriate
  * `pico_enable_stdio_*` must be performed in the Makefile.
  */
+/**
+ * MIPI_DECL_FN (
+ * extern struct mipi_di_dev
+ * mipi_dbi_dev_create (
+ *   const char dev_name[],
+ *   int witdh,
+ *   int height,
+ *   _IN_ u8 mipi_init_seq[] ) 
+ * {
+ *   
+ * });
+ */
 #define __mipi_dbg(tag, fmt, ...)         \
   {                                       \
     char log_buff[LOG_BUFF_SZ];           \
@@ -69,7 +81,7 @@ extern "C" {
 #define __mipi_dbg(tag, fmt, ...) 
 #endif
 
-#define IO_CTR(x) (struct mipi_io_connector *)(x)
+#define IO_CTR(x) (struct mipi_io_ctr *)(x)
 #define IO_CTR_PTR(x) (IO_CTR(&x))
 
 #define MIPI_CLR(r, g, b) \
@@ -81,6 +93,19 @@ extern "C" {
 
 #define _OUT_
 #define _IN_
+
+
+/******************** 
+ * Static Prototypes
+ *******************/
+
+static size_t 
+__mipi_color_conv_rgb565 (
+  struct mipi_panel_fmt * fmt,
+  _IN_ struct mipi_color clr[],
+  _OUT_ u8 * clr_buff[],
+  size_t buff_sz
+);
 
 
 /******************** 
@@ -129,13 +154,13 @@ enum mipi_color_fmt {
  * 
  * The destination format shall determine how the color data is to be 
  * interpreted; that is to say, the method by which an (R,G,B) color tuple,
- * in some source color space, is to be converted into a byte stream in an
- * appropriate format for storage in the frame memory of the panel.
+ * in some source color space, is to be converted into a byte stream of an
+ * appropriate format for storage in the panel frame memory.
  */
 struct mipi_panel_fmt {
   const char * DBG_TAG;
   enum mipi_color_fmt fmt;
-  uint bpp, bytes_req;
+  const uint bpp; // << bytes per pixel, stride = WIDTH*bpp
 
   size_t (*fmt_color)( 
     struct mipi_panel_fmt * self,
@@ -144,6 +169,8 @@ struct mipi_panel_fmt {
     size_t buff_sz
   );
 };
+
+typedef u8 mipi_dcs_cmd_t;
 
 /**
  * ========================
@@ -166,7 +193,7 @@ struct mipi_io_ctr {
    */
   void (*send_cmd)(
     struct mipi_io_ctr * self, 
-    uint cmd,
+    mipi_dcs_cmd_t cmd,
     _IN_ u8 * params, 
     size_t len 
   );
@@ -188,7 +215,7 @@ struct mipi_io_ctr {
    */
   size_t (*recv_params)(
     struct mipi_io_ctr * self, 
-    uint cmd,
+    mipi_dcs_cmd_t cmd,
     _OUT_ u8 * params,
     size_t len 
   );
@@ -214,34 +241,29 @@ struct mipi_io_ctr {
  * An instance of this structure represents a display panel that is compatible
  * with the MIPI Display Bus Interface (DBI) standard. The structure contains
  * information about the panel, such as its name, resolution, color formats,
- * and the initialization sequence required to bring the panel into a usable
- * state.
+ * and the panel initialization sequence.
  */
 struct mipi_dbi_dev {
   const char * DBG_TAG;
-  size_t nfmts, init_seq_sz;
   uint width, height;
-  /**
-   * Color formats the panel is capable of displaying.
-   */
-  struct linked_list * fmt_list;
   struct mipi_panel_fmt out_fmt;
   struct mipi_io_ctr * io;
-  // struct mipi_fmbf * fmbf;
+  
   /**
    * Set when the panel is in an invalid state due to incompatibility with a 
    * request made or system error. 
    */
   uint errno;
+
   /**
-   * The initialization sequence for the display. Must be provided by the
-   * display manufacturer, or otherwise obtained if no existing sequence
-   * is available. Sometimes certain parameters in the display initialization
-   * may differ from the default values provided here; and, if this is the 
-   * case, these commands may be sent through the IO connector after the 
+   * The initialization sequence for the display. Must be provided by the 
+   * display manufacturer or otherwise obtained if no existing sequence is 
+   * available. Sometimes certain parameters in the display initialization may 
+   * differ from the default values provided here; and, if this is the case, 
+   * these commands may be sent through the IO connector after the 
    * initialization has completed. (e.g. gamma correction, etc.)
    */
-  const u8 __init_seq[];
+  const u8 * __init_seq;
 };
 
 
@@ -249,10 +271,12 @@ struct mipi_dbi_dev {
  * Global Variables
  *******************/
 
-#define NUM_PANEL_FMT 3 /* RGB_111, RGB_565, RGB_888 */
-
+static const char MIPI_DGB_TAG[]="mipi_dbi_spi";
 static const enum mipi_color_fmt MIPI_SRC_FMT=RGB_888;
-extern const struct mipi_panel_fmt panel_fmt[NUM_PANEL_FMT];
+
+#define NUM_PANEL_FMTS 3 /* RGB_111, RGB_565, RGB_888 */
+extern const struct mipi_panel_fmt MIPI_PANEL_FMT[NUM_PANEL_FMTS];
+// extern const struct linked_list MIPI_PANEL_FMT; 
 
 /**
  * ========================
@@ -272,25 +296,54 @@ extern const struct mipi_panel_fmt panel_fmt[NUM_PANEL_FMT];
  * Global Functions
  *******************/
 
+extern struct mipi_dbi_dev 
+mipi_dbi_dev_create (
+  const char * panel_name, 
+  uint width,
+  uint height,
+  _IN_ const u8 mipi_init_seq[]
+);
+
 extern void
-mipi_panel_dev_init ( 
+mipi_dbi_dev_init ( 
   struct mipi_dbi_dev * dev,
   struct mipi_io_ctr * ctr
 );
 
 extern void 
-mipi_panel_dev_free (struct mipi_dbi_dev * dev);
+mipi_dbi_dev_free (struct mipi_dbi_dev * dev);
 
 extern struct mipi_panel_fmt *
 mipi_panel_get_fmt (void);
 
+/**
+ * IFPF needs to be updated, then the entire frame memory rewritten with the 
+ * contents in the format specified; it is not enough to update the frame 
+ * buffer selectively, as the whole buffer needs to be flushed.
+ */
 extern void
-mipi_panel_set_output_fmt (struct mipi_panel_fmt * fmt);
+mipi_panel_set_output_fmt (enum mipi_color_fmt fmt);
 
 
 /******************** 
  * Inline Functions
  *******************/
+
+static inline size_t 
+__mipi_color_conv_rgb565 (
+  struct mipi_panel_fmt * self,
+  _IN_ struct mipi_color clr[],
+  _OUT_ u8 * clr_buff[],
+  size_t buff_sz )
+{
+  *clr_buff=calloc(buff_sz, self->bpp);
+  for (size_t i=0; i<buff_sz; i++) {
+    struct mipi_color c=clr[i];
+    (*clr_buff)[i]  =(c.b & 0xf8)^(c.g>>5);
+    (*clr_buff)[i+1]=((c.g&0x1c)<<3)^(c.r>>3);
+  }
+  return (self->bpp)*buff_sz;
+}
 
 
 #ifdef __cplusplus
