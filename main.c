@@ -5,7 +5,7 @@
 // #include "hardware/dma.h"
 // #include "hardware/uart.h"
 
-#define __MIPI_DBG_ENABLE__
+#define MIPI_DBG_EN
 
 #include "mipi.h"
 #include "mipi_dbi_spi.h"
@@ -123,7 +123,7 @@ init_panel(const uint8_t cmds[])
       }
     }
   } else {
-    __mipi_dbg(MIPI_DBG_TAG, "no panel init provided, failed..\n");
+    _mipi_dbg(MIPI_DBG_TAG, "no panel init provided, failed..\n");
   }
 
   gpio_put(PIN_DCX, 1);
@@ -260,13 +260,13 @@ main()
     16,
     1
   );
-  mipi_dbi_dev_init (dev, IO_CTR_PTR (ctr));
+  mipi_dbi_dev_init (dev, MIPI_IO_CTR_PTR (ctr));
 
 release_dev:
   if (dev) {
     mipi_dbi_dev_free (dev);
   } else {
-    __mipi_dbg (MIPI_DBG_TAG, "no device to release\n");
+    _mipi_dbg (MIPI_DBG_TAG, "no device to release\n");
   }
 release_conn:
   mipi_spi_connector_free (ctr); // mipi_spi_connector_deinit (ctr);

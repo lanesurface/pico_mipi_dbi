@@ -130,7 +130,7 @@ static ssize_t
 __mipi_dcs_write_seq (struct mipi_io_ctr * io_ctr, u8 init_seq[])
 {
   if (io_ctr==NULL) {
-    __mipi_dbg (
+    _mipi_dbg (
       MIPI_DBG_TAG,
       "IO connector uninitialized, failed to write init sequence"
     );
@@ -139,7 +139,7 @@ __mipi_dcs_write_seq (struct mipi_io_ctr * io_ctr, u8 init_seq[])
   }
 
   if (init_seq==NULL) {
-    __mipi_dbg (
+    _mipi_dbg (
       MIPI_DBG_TAG,
       "no initialization sequence provided, aborting transaction.."
     );

@@ -16,8 +16,9 @@
 #ifndef __MIPI_DBI_SPI__
 #define __MIPI_DBI_SPI__
 
-#include "mipi.h"
+#include "pico/mutex.h"
 #include "hardware/spi.h"
+#include "mipi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,7 +31,7 @@ extern "C" {
 
 #define MIPI_SPI_DBI_CTR( spi_prt, sck_pin, mosi_pin, miso_pin, cs_pin, dcx_pin ) \
   (struct mipi_spi_ctr){ \
-    .io=MIPI_SPI_CTR_FUNCS, \
+    .io=_MIPI_SPI_CTR_FUNCS, \
     .spi=spi_prt, \
     .sck=sck_pin, \
     .mosi=mosi_pin, \
@@ -38,6 +39,22 @@ extern "C" {
     .cs=cs_pin, \
     .dcx=dcx_pin \
   }
+
+#define _SPI_ACTIVE_STATE ((_Bool)0)
+
+#define _SPI_BEGIN_TX(_spi_dev)              \
+  mipi_lock_spi_dev (_spi_dev, MIPI_MAX_TM); \
+  gpio_put (                                 \
+    _spi_dev->cs,                            \
+    _SPI_ACTIVE_STATE                        \
+  );
+
+#define _SPI_END_TX(_spi_dev)                  \
+  mipi_unlock_spi_dev (_spi_dev, MIPI_MAX_TM); \
+  gpio_put (                                   \
+    _spi_dev->cs,                              \
+    ~(_SPI_ACTIVE_STATE)                       \
+  );
 
 
 /******************** 
@@ -52,19 +69,25 @@ extern "C" {
 #define MIPI_SPI_DEFAULT_CS_PIN   17
 #define MIPI_SPI_DEFAULT_DCX_PIN  20
 
-extern const struct mipi_io_ctr MIPI_SPI_CTR_FUNCS;
+extern const struct mipi_io_ctr _MIPI_SPI_CTR_FUNCS;
 
 
 /******************** 
- *  Data Structures
+ *      Types
  *******************/
+
+struct _mipi_spi_dev {
+  struct mipi_dbg_info_hdr * hdr;
+  const spi_inst_t * spi;
+  uint cs, sck, mosi, miso;
+  mutex_t spi_mtx;
+  const size_t buff_sz;
+  uint8_t * tx_buff, * rx_buff;
+};
 
 struct mipi_spi_ctr {
   struct mipi_io_ctr io; /* BASE */
-  spi_inst_t * spi;
-  uint8_t * tx_buf, * rx_buf;
-  size_t tx_len, rx_len;
-  uint sck, mosi, miso, cs, dcx;
+  struct _mipi_spi_dev * spi_dev;
   /**
    * In the case that a transaction fails, this flag is set to the relevant
    * error code(s). It is the responsibility of the caller of these interface
@@ -79,7 +102,7 @@ struct mipi_spi_ctr {
  *******************/
 
 extern struct mipi_spi_ctr 
-mipi_spi_ctr(
+mipi_create_spi_ctr (
   spi_inst_t * spi,
   uint sck,
   uint mosi,
@@ -89,34 +112,46 @@ mipi_spi_ctr(
 );
 
 extern void
-mipi_dbi_spi_connector_init( struct mipi_spi_ctr * self );
+mipi_init_spi_ctr (struct mipi_spi_ctr * self);
 
 extern void
-mipi_dbi_spi_connector_free( struct mipi_spi_ctr * self );
+mipi_free_spi_ctr (struct mipi_spi_ctr * self);
 
 extern void
-mipi_spi_send_cmd( 
+mipi_spi_send_cmd ( 
   struct mipi_io_ctr * self,
-  uint cmd,
+  mipi_dcs_cmd_t cmd,
   _IN_ uint8_t * buf, 
   size_t len 
 );
 
 extern size_t
-mipi_spi_recv_params( 
+mipi_spi_recv_params ( 
   struct mipi_io_ctr * self,
-  uint cmd,
+  mipi_dcs_cmd_t cmd,
   _OUT_ uint8_t * params,
   size_t len 
 );
 
 extern void 
-mipi_spi_flush_fmbf( 
+mipi_spi_flush_fmbf ( 
   struct mipi_io_ctr * self,
-  _IN_ uint8_t * buf,
+  _IN_ mipi_dcs_cmd_t * buf,
   const struct mipi_area bounds,
   size_t len 
 );
+
+extern _Bool
+mipi_lock_spi_dev_timeout_ms (
+  struct _mipi_spi_dev * dev,
+  uint32_t ms
+);
+
+extern _Bool
+mipi_try_lock_spi_dev (struct _mipi_spi_dev * dev);
+
+extern void 
+mipi_unlock_spi_dev (struct _mipi_spi_dev * dev);
 
 
 #ifdef __cplusplus

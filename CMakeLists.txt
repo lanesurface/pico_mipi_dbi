@@ -1,4 +1,3 @@
-# Generated Cmake Pico project file
 
 cmake_minimum_required(VERSION 3.13)
 
@@ -23,37 +22,34 @@ if (EXISTS ${picoVscode})
     include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico_w CACHE STRING "Board type")
 
-# Pull in Raspberry Pi Pico SDK (must be before project)
-include(pico_sdk_import.cmake)
+set (PICO_SDK_FETCH_FROM_GIT on)
+set(PICO_BOARD pico_w CACHE STRING "Board Type")
 
-project(TestTFT C CXX ASM)
+include (pico_sdk_import.cmake)
+project (test_tft C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
-pico_sdk_init()
+pico_sdk_init ()
 
 set (MIPI_ROOT_LIB_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-add_subdirectory(src)
-add_executable(TestTFT main.c)
-
-pico_set_program_name(TestTFT "TestTFT")
-pico_set_program_version(TestTFT "0.1")
+add_subdirectory (src)
+add_executable (test_tft_main main.c)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(TestTFT 0)
-pico_enable_stdio_usb(TestTFT 1)
+pico_enable_stdio_uart (test_tft 0)
+pico_enable_stdio_usb (test_tft 1)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_compile_definitions (
+    tft_tft_main PUBLIC 
+    MIPI_MGL_EN )
+
+target_link_libraries (
+  test_tft_main PUBLIC
+  pico_stdlib 
   pico_mipi_dbi 
-  /* ... */ 
-  )
-
-# Add the standard include files to the build
-target_include_directories(TestTFT PRIVATE
-  ${CMAKE_CURRENT_LIST_DIR}
-  ${CMAKE_CURRENT_LIST_DIR}/include
+  # ... 
 )
 
-pico_add_extra_outputs(TestTFT)
+pico_add_extra_outputs (test_tft) # UF2, map, etc.

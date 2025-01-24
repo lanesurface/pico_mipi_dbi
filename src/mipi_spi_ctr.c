@@ -25,7 +25,7 @@
     spi_conn->cs, \
     1 );
 
-const struct mipi_io_ctr MIPI_SPI_CTR_FUNCS=
+const struct mipi_io_ctr _MIPI_SPI_CTR_FUNCS=
 (struct mipi_io_ctr) {
   .send_cmd=mipi_spi_send_cmd,
   .recv_params=mipi_spi_recv_params,
@@ -42,7 +42,7 @@ mipi_spi_ctr (
   uint dcx )
 {
   return (struct mipi_spi_ctr){
-    .io=MIPI_SPI_CTR_FUNCS,
+    .io=_MIPI_SPI_CTR_FUNCS,
     .sck=sck,
     .mosi=mosi,
     .miso=miso,
@@ -59,7 +59,7 @@ mipi_dbi_spi_connector_init (struct mipi_spi_ctr * self)
     MIPI_SPI_DEFAULT_BAUD 
   );
 
-  gpio_set_function (self->miso, GPIO_FUNC_SPI );
+  gpio_set_function (self->miso, GPIO_FUNC_SPI);
   gpio_set_function (self->mosi, GPIO_FUNC_SPI);
   gpio_set_function (self->sck,  GPIO_FUNC_SPI);
   gpio_set_function (self->cs,   GPIO_FUNC_SIO);
@@ -84,7 +84,7 @@ mipi_spi_send_cmd (
   struct mipi_spi_ctr * spi_conn;
 
   if (params==NULL) {
-    __mipi_dbg (
+    _mipi_dbg (
       self->DBG_TAG, 
       "command buffer empty, aborting transaction\n"
     );
@@ -94,7 +94,7 @@ mipi_spi_send_cmd (
 
   spi_conn = (struct mipi_spi_ctr *) self;
   if (spi_conn) {
-    SPI_BEGIN_TRANSACTION (spi_conn);
+    _SPI_BEGIN_TX (spi_ctr->spi_dev);
 
     gpio_put (spi_conn->dcx, 0);
     spi_write_blocking ( 
@@ -110,9 +110,9 @@ mipi_spi_send_cmd (
       len 
     );
 
-    SPI_END_TRANACTION (spi_conn);
+    _SPI_END_TX (spi_ctr->spi_dev);
   } else {
-    __mipi_dbg (
+    _mipi_dbg (
       self->DBG_TAG, 
       "SPI connector not initialized\n"
     );
@@ -144,7 +144,7 @@ mipi_spi_flush_fmbf (
   struct mipi_spi_ctr * spi_conn;
 
   if (pix_buff==NULL) {
-    __mipi_dbg (
+    _mipi_dbg (
       self->DBG_TAG,
       "pixel data buffer empty, aborting transaction\n"
     );
@@ -179,7 +179,7 @@ mipi_spi_flush_fmbf (
 
       SPI_END_TRANACTION (spi_conn);
     } else {
-      __mipi_dbg (
+      _mipi_dbg (
         self->DBG_TAG, 
         "SPI connector not initialized\n"
       );

@@ -6,28 +6,20 @@
 
 #include "mipi.h"
 
-
-static const struct mipi_panel_fmt MIPI_FMT_RGB565=
-  (struct mipi_panel_fmt) {
-    .DBG_TAG="mipi_fmt_rgb565",
+const struct mipi_panel_fmt MIPI_PANEL_FMT[]=
+{
+  [RGB_565]=
+  {
     .fmt=RGB_565,
     .bpp=2,
-    .fmt_color=__mipi_color_conv_rgb565
-  };
-
-static const struct mipi_panel_fmt MIPI_FMT_RGB888=
-  (struct mipi_panel_fmt) {
-    .DBG_TAG="mipi_fmt_rgb888",
+    .fmt_color=_mipi_cvt_clr_rgb565
+  },
+  [RGB_888]=
+  {
     .fmt=RGB_888,
     .bpp=3,
     .fmt_color=NULL
-  };
-
-const struct mipi_panel_fmt MIPI_PANEL_FMT[]=
-{
-  NULL,
-  MIPI_FMT_RGB565,
-  MIPI_FMT_RGB888,
+  }
 };
 
 
@@ -53,24 +45,8 @@ mipi_dbi_dev_init (
   struct mipi_dbi_dev * dev, 
   struct mipi_io_ctr * ctr )
 {
-  if (dev==NULL) {
-    __mipi_dbg (
-      MIPI_DBG_TAG, 
-      "no DBI device provided, aborting.."
-    );
-    
-    return;
-  }
-
-  if (ctr==NULL) {
-    __mipi_dbg (
-      dev->DBG_TAG,
-      "invalid IO connector supplied during init, aborting.."
-    );
-    dev->errno|=EINVAL;
-    
-    return;
-  }
+  MIPI_CHK_NOT_NULL_OR_EXIT (dev, init_failed);
+  MIPI_CHK_NOT_NULL_OR_EXIT (ctr, init_failed);
 
   dev->io=ctr;
   /**
@@ -82,12 +58,18 @@ mipi_dbi_dev_init (
       dev->io, 
       dev->__init_seq
     );
+
+    return;
   } else {
-    __mipi_dbg (
+    _mipi_dbg (
       dev->DBG_TAG,
       "panel initialization sequence required, init failed"
     );
-    dev->errno|=EINVAL;
-    return;
+    goto init_failed;
   }
+
+init_failed:
+  dev->errno=EINVAL;
+  return;
 }
+
