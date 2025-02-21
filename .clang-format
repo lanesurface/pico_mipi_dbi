@@ -1,0 +1,140 @@
+
+BasedOnStyle: GNU
+# Allow space for line numbers in Vim/GCC Diagnostics
+ColumnLimit: 75
+LineEnding: LF
+UseTab: AlignWithSpaces
+TabWidth: 2
+KeepEmptyLines:
+  AtEndOfFile: true
+  AtStartOfFile: true
+  AtStartOfBlock: false
+MaxEmptyLinesToKeep: 2
+InsertNewlineAtEOF: true
+
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+ReflowComments: true
+SpacesBeforeTrailingComments: 1
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: -1
+AlignOperands: AlignAfterOperator
+AlignConsecutiveAssignments: None
+
+Language: Cpp
+IndentWidth: 2
+ContinuationIndentWidth: 2
+
+AlignAfterOpenBracket: BlockIndent
+AlignArrayOfStructures: Left
+AlignConsecutiveDeclarations: None
+AlignConsecutiveBitFields: Consecutive
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: LeftWithLastLine
+
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseExpressionOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakBeforeMultilineStrings: true
+
+BinPackArguments: false
+BinPackLongBracedList: true
+BinPackParameters: false #AlwaysOnePerLine
+ExperimentalAutoDetectBinPacking: false
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: true
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeElse: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+BreakAdjacentStringLiterals: true
+BreakAfterAttributes: Always
+BreakAfterReturnType: All
+BreakBeforeInlineASMColon: OnlyMultiline
+BreakBeforeTernaryOperators: true
+BreakBeforeBinaryOperators: NonAssignment
+BreakBinaryOperations: OnePerLine
+BreakFunctionDefinitionParameters: true
+BreakStringLiterals: true
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<[:alnum:]*'
+    Priority: -5
+  - Regex: '^"(pico|hardware|sys|[_]*pf)_*/'
+    Priority: -3
+  - Regex: '*.'
+    Priority: 0
+SortIncludes: CaseInsensitive
+
+IndentCaseBlocks: true
+IndentCaseLabels: false
+IndentExportBlock: false
+IndentGotoLabels: true
+IndentPPDirectives: AfterHash
+PPIndentWidth: 1
+IndentWrappedFunctionNames: false
+InsertBraces: false
+
+PenaltyBreakAssignment: 700
+PenaltyBreakBeforeFirstCallParameter: 0
+PenaltyBreakBeforeMemberAccess: 700
+PenaltyBreakComment: 50
+PenaltyBreakOpenParenthesis: 150
+PenaltyBreakString: 50
+PenaltyExcessCharacter: 1000
+PenaltyIndentedWhitespace: 100
+PenaltyReturnTypeOnItsOwnLine: 0
+
+PointerAlignment: Middle
+BitFieldColonSpacing: Both
+QualifierAlignment: Custom
+QualifierOrder: [
+  static,
+  const,
+  inline,
+  volatile,
+  restrict,
+  type ]
+AttributeMacros: [
+  _RUN_FROM_RAM_FUNC,
+  _IN,
+  _OUT,
+  _COPY_FROM_USER,
+  _COPY_TO_USER ]
+TypenameMacros: [_OSAL_ATOMIC_FLAG]
+
+RemoveBracesLLVM: false
+RemoveEmptyLinesInUnwrappedLines: true
+RemoveParentheses: Leave
+RemoveSemicolon: false
+
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeParens: NonEmptyParentheses
+SpacesInParens: Never
+SpaceInEmptyBlock: false
+SpaceBeforeSquareBrackets: false
+SpacesInSquareBrackets: false
+SpaceAroundPointerQualifiers: Both
+
+SeparateDefinitionBlocks: Leave
+SkipMacroDefinitionBody: false

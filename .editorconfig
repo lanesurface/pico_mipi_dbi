@@ -1,0 +1,19 @@
+# Please see the contribution guidelines for detailed information about the
+# formatting of source files.
+root=true
+
+[*]
+end_of_line=lf
+trim_trailing_whitespace=true
+#max_line_length=80 # I use Vim a lot..
+insert_final_newline=true
+charset=utf-8
+
+[*.{c,cpp,cxx,h}]
+indent_style=tab
+indent_size=2
+
+[Makefile]
+indent_style=tab
+indent_size=unset
+tab_width=2

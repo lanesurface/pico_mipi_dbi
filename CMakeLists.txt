@@ -1,9 +1,7 @@
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.24)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
@@ -24,32 +22,44 @@ endif()
 # ====================================================================================
 
 set (PICO_SDK_FETCH_FROM_GIT on)
-set(PICO_BOARD pico_w CACHE STRING "Board Type")
+set (PICO_BOARD pico_w CACHE STRING "Board Type")
 
-include (pico_sdk_import.cmake)
-project (test_tft C CXX ASM)
+list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include (cmake/pico_sdk_import.cmake)
+project (test_tft DESCRIPTION "" LANGUAGES C
+  CXX
+  ASM)
 
-# Initialise the Raspberry Pi Pico SDK
+# Initialize the Raspberry Pi Pico SDK
 pico_sdk_init ()
 
-set (MIPI_ROOT_LIB_DIR ${CMAKE_CURRENT_LIST_DIR})
-
+set (MIPI_ROOT_LIB_DIR ${test_tft_SOURCE_DIR} CACHE PATH "")
 add_subdirectory (src)
 add_executable (test_tft_main main.c)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart (test_tft 0)
-pico_enable_stdio_usb (test_tft 1)
+pico_enable_stdio_uart (test_tft_main 0)
+pico_enable_stdio_usb (test_tft_main 1)
 
-target_compile_definitions (
-    tft_tft_main PUBLIC 
-    MIPI_MGL_EN )
+set (LIB_PATH "${CMAKE_CURRENT_LIST_DIR}/lib")
+# add_subdirectory (${LIB_PATH}/freetype)
+
+# find_library (free_type_lib NAMES freetype freetype2 PATHS
+#   "${LIB_PATH}/freetype/build"
+#   REQUIRED)
+
+# target_link_options (test_tft_main PRIVATE
+#   "/SECTION:          \
+#   .__run_in_ram_func, \
+#   wrx,                \
+#   ALIGN: 2")
 
 target_link_libraries (
-  test_tft_main PUBLIC
-  pico_stdlib 
-  pico_mipi_dbi 
-  # ... 
-)
+  test_tft_main
+  PRIVATE
+    pico_stdlib
+    mipi_dbi
+    freetype
+    mipi_gfx_lib)
 
-pico_add_extra_outputs (test_tft) # UF2, map, etc.
+pico_add_extra_outputs (test_tft_main) # UF2, map, etc.

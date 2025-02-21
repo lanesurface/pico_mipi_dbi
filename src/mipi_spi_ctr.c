@@ -1,6 +1,6 @@
 
 /**
- * 
+ *
  * Copyright Surface EP, LLC 2025.
  */
 
@@ -9,31 +9,16 @@
 #include "mipi_dcs.h"
 #include "mipi_dbi_spi.h"
 
-/**
- * At the moment, starting and ending a transaction simply requires driving the
- * chip-select pin hi-lo, but, in the future, it may be necessary to obtain a 
- * lock on the peripheral if multiple displays are to be connected to a single
- * bus.
- */
-#define SPI_BEGIN_TRANSACTION(spi_conn) \
-  gpio_put ( \
-    spi_conn->cs, \
-    0 );
-
-#define SPI_END_TRANACTION(spi_conn) \
-  gpio_put ( \
-    spi_conn->cs, \
-    1 );
 
 const struct mipi_io_ctr _MIPI_SPI_CTR_FUNCS=
 (struct mipi_io_ctr) {
-  .send_cmd=mipi_spi_send_cmd,
-  .recv_params=mipi_spi_recv_params,
+  .write_panel_reg=mipi_spi_send_cmd,
+  .read_panel_reg=mipi_spi_recv_params,
   .flush_fmbf=mipi_spi_flush_fmbf
 };
 
-struct mipi_spi_ctr 
-mipi_spi_ctr ( 
+struct mipi_spi_ctr
+mipi_spi_ctr (
   spi_inst_t * spi,
   uint sck,
   uint mosi,
@@ -54,9 +39,9 @@ mipi_spi_ctr (
 void
 mipi_dbi_spi_connector_init (struct mipi_spi_ctr * self)
 {
-  spi_init ( 
-    self->spi, 
-    MIPI_SPI_DEFAULT_BAUD 
+  spi_init (
+    self->spi,
+    _SPI_DEF_BD
   );
 
   gpio_set_function (self->miso, GPIO_FUNC_SPI);
@@ -78,14 +63,14 @@ void
 mipi_spi_send_cmd (
   struct mipi_io_ctr * self,
   uint cmd,
-  _IN_ uint8_t * params, 
+  _IN_ uint8_t * params,
   size_t len )
 {
   struct mipi_spi_ctr * spi_conn;
 
   if (params==NULL) {
     _mipi_dbg (
-      self->DBG_TAG, 
+      self->DBG_TAG,
       "command buffer empty, aborting transaction\n"
     );
     spi_conn->errno|=EINVAL;
@@ -97,45 +82,45 @@ mipi_spi_send_cmd (
     _SPI_BEGIN_TX (spi_ctr->spi_dev);
 
     gpio_put (spi_conn->dcx, 0);
-    spi_write_blocking ( 
-      spi_conn->spi, 
-      &cmd, 
-      1 
+    spi_write_blocking (
+      spi_conn->spi,
+      &cmd,
+      1
     );
 
     gpio_put (spi_conn->dcx, 1);
-    spi_write_blocking ( 
-      spi_conn->spi, 
-      params, 
-      len 
+    spi_write_blocking (
+      spi_conn->spi,
+      params,
+      len
     );
 
     _SPI_END_TX (spi_ctr->spi_dev);
   } else {
     _mipi_dbg (
-      self->DBG_TAG, 
+      self->DBG_TAG,
       "SPI connector not initialized\n"
     );
     spi_conn->errno|=ENODEV;
-    return; 
+    return;
   }
 }
 
-size_t 
-mipi_spi_recieve_params ( 
+size_t
+mipi_spi_recieve_params (
   struct mipi_io_ctr * self,
   uint cmd,
-  _OUT_ uint8_t * params,
+  _OUT uint8_t * params,
   size_t len )
 {
   /*
-   * TODO  
+   * TODO
    */
   self->errno|=ENOTSUP;
 }
 
-void 
-mipi_spi_flush_fmbf ( 
+void
+mipi_spi_flush_fmbf (
   struct mipi_io_ctr * self,
   _IN_ uint8_t * pix_buff,
   const struct mipi_area bounds,
@@ -153,7 +138,7 @@ mipi_spi_flush_fmbf (
   } else {
     spi_conn=(struct mipi_spi_ctr *) self;
     if (spi_conn) {
-      SPI_BEGIN_TRANSACTION (spi_conn);
+      _SPI_BEGIN_TX (spi_conn);
 
       // u8 ca_params[];
       // spi_conn->io->write_cmd(
@@ -164,23 +149,23 @@ mipi_spi_flush_fmbf (
       // );
 
       // spi_conn->io->write_cmd(
-      //   self, 
-      //   RAMWR, 
-      //   NULL, 
+      //   self,
+      //   RAMWR,
+      //   NULL,
       //   0
       // );
 
       gpio_put (spi_conn->dcx, 1);
-      spi_write_blocking ( 
-        spi_conn->spi, 
-        pix_buff, 
-        len 
+      spi_write_blocking (
+        spi_conn->spi,
+        pix_buff,
+        len
       );
 
-      SPI_END_TRANACTION (spi_conn);
+      _SPI_END_TX (spi_conn);
     } else {
       _mipi_dbg (
-        self->DBG_TAG, 
+        self->DBG_TAG,
         "SPI connector not initialized\n"
       );
       spi_conn->errno|=ENODEV;

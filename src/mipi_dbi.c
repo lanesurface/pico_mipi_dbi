@@ -1,19 +1,24 @@
 
 /**
- * 
+ *
  * Copyright Surface EP, LLC 2025.
  */
 
 #include "mipi.h"
 
-const struct mipi_panel_fmt MIPI_PANEL_FMT[]=
+const struct mipi_ifpf MIPI_PANEL_FMT[]=
 {
   [RGB_565]=
   {
     .fmt=RGB_565,
     .bpp=2,
-    .fmt_color=_mipi_cvt_clr_rgb565
+    .fmt_color=_ifpf_cvt_rgb565
   },
+	/**
+	 * Both `RGB_666` and `RGB_888` can be transmitted to the panel as-is due to
+	 * the alignment requirements of the color components in the destination
+	 * format.
+	 */
   [RGB_888]=
   {
     .fmt=RGB_888,
@@ -23,26 +28,26 @@ const struct mipi_panel_fmt MIPI_PANEL_FMT[]=
 };
 
 
-struct mipi_dbi_dev 
-mipi_dbi_dev_create ( 
+struct mipi_dbi_dev
+mipi_dbi_dev_create (
   const char * panel_name,
   uint width,
   uint height,
   struct mipi_color_fmt clr_fmt,
   _IN_ const u8 mipi_init_seq[] )
 {
-  return (struct mipi_dbi_dev) {
-    .DBG_TAG=panel_name,
+  return (struct mipi_dbi_dev)
+	{
     .width=width,
     .height=height,
     .out_fmt=clr_fmt,
-    .__init_seq=mipi_init_seq
+    .mipi_init_seq=mipi_init_seq
   };
 }
 
-void 
+void
 mipi_dbi_dev_init (
-  struct mipi_dbi_dev * dev, 
+  struct mipi_dbi_dev * dev,
   struct mipi_io_ctr * ctr )
 {
   MIPI_CHK_NOT_NULL_OR_EXIT (dev, init_failed);
@@ -53,10 +58,10 @@ mipi_dbi_dev_init (
    * Set output format, initialize frame buffer.
    */
 
-  if (dev->__init_seq) {
-    __mipi_dcs_write_seq (
-      dev->io, 
-      dev->__init_seq
+  if (dev->mipi_init_seq) {
+    _mipi_dcs_write_seq (
+      dev->io,
+      dev->mipi_init_seq
     );
 
     return;
